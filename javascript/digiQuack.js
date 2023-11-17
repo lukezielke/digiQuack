@@ -3,6 +3,7 @@ function convert() {
 	var duckyScript = document.getElementById('inputBox').value;
 	var digisparkScript = "";
 
+
 	// Write module imports to output file:
 	digisparkScript += "// Converted using digiQuack by CedArctic (https://github.com/CedArctic/digiQuack) \n\n";
 	digisparkScript += "#include \"DigiKeyboard.h\"\n\n";
@@ -25,6 +26,8 @@ function convert() {
 	// Variables:
 	var previousStatement = "";
 	var keys = [];
+	var commands = [];
+
 
 	// Dictionary containing Duckyscript and their corresponding Digispark keys
 	var ducky2digi = {
@@ -51,7 +54,7 @@ function convert() {
 	// Process each line from the ducky script:
 	for (line = 0; line < duckyScript.length; line++) {
 
-		// Check if the statement is a comment, delay, string, repeat or key combination
+		// Check if the statement is a comment, multiline comment, delay, string, stringln, repeat or key combination
 		if (duckyScript[line].slice(0, 4) == "REM ") {
 			previousStatement = duckyScript[line].replace("REM", "\t//");
 		} else if (duckyScript[line].slice(0, 9) == "REM_BLOCK") {
@@ -64,7 +67,7 @@ function convert() {
 			previousStatement = "\tDigiKeyboard.print(\"" + duckyScript[line].slice(7).replaceAll("\\", "\\\\").replaceAll("\"", "\\\"") + "\");";
 		} else if (duckyScript[line].slice(0, 8) == "STRINGLN") {
 			previousStatement = "\tDigiKeyboard.print(\"" + duckyScript[line].slice(9).replaceAll("\\", "\\\\").replaceAll("\"", "\\\"") + "\");\n\tDigiKeyboard.sendKeyStroke(KEY_ENTER);";
-		}else if (duckyScript[line].slice(0, 6) == "REPEAT") {
+		} else if (duckyScript[line].slice(0, 6) == "REPEAT") {
 			var repetitions = parseInt(duckyScript[line].slice(7)) - 1;
 			for (i = 0; i < repetitions; i++) {
 				digisparkScript += previousStatement;
@@ -75,22 +78,32 @@ function convert() {
 					digisparkScript += "\tDigiKeyboard.delay(" + defaultDelay + ");\n";
 				}
 			}
-		} else{
+		} else {
 			// Write beginning of command:
 			previousStatement = "\tDigiKeyboard.sendKeyStroke(";
 			// Split statement into keys
 			keys = duckyScript[line].split(" ");
 			// Go through the keys matching them through the dictionary to Digispark keys
-			for (j = 0; j < keys.length; j++){
-				if (keys[j] in ducky2digi){
-					previousStatement += ducky2digi[keys[j]] + ");";
-				}else{
-					// If it is not in the dictionary
-					previousStatement = duckyScript[line];
+			for (j = 0; j < keys.length; j++) {
+				if (keys[j] in ducky2digi) {
+					commands.push(keys[j]);
+				} else {
+					// If the key is not in the dictionary, assume it is part of a REM_BLOCK
+					previousStatement = "\t" + duckyScript[line];
 				}
 			}
-			// Remove last comma and add a parenthesis
-			//previousStatement = previousStatement.slice(0, previousStatement.length - 1) + ");";
+			console.log(commands.length)
+			if (commands.length == 3 && previousStatement.slice(-1) == "(") {
+				previousStatement += ducky2digi[commands[2]] + "," + ducky2digi[commands[0]] + "|" + ducky2digi[commands[1]] + ");";
+			} else if (commands.length == 2 && previousStatement.slice(-1) == "(") {
+				previousStatement += ducky2digi[commands[1]] + "," + ducky2digi[commands[0]] + ");";
+			} else if (commands.length == 1 && previousStatement.slice(-1) == "(") {
+				previousStatement += ducky2digi[commands[0]] + ");";
+			} else {
+
+			}
+			commands = [];
+
 		}
 
 		// Write command to output file and add a new line \n :
