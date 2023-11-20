@@ -5,7 +5,7 @@ function convert() {
 
 
 	// Write module imports to output file:
-	digisparkScript += "// Converted using digiQuack by CedArctic (https://github.com/CedArctic/digiQuack) \n\n";
+	digisparkScript += "// Converted using digiQuack by Luke Zielke (https://github.com/lukezielke/digiQuack) \n\n";
 	digisparkScript += "#include \"DigiKeyboard.h\"\n\n";
 	digisparkScript += "void setup() {}\n\n";
 	digisparkScript += "void loop() {\n";
